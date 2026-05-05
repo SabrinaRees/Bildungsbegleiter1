@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bildungsbegleiter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #f7f3ee; color: #1a1410; font-family: Georgia, serif;
+    min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; font-size: 16px;
+  }
+  #keyScreen {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 2rem 1.5rem; gap: 1.2rem; text-align: center;
+  }
+  #keyScreen h2 { font-size: 1.3rem; font-weight: normal; font-style: italic; }
+  #keyScreen p  { font-size: 0.88rem; color: #7a6f65; line-height: 1.7; }
+  #keyScreen a  { color: #8b4513; }
+  #keyInput {
+    width: 100%; max-width: 400px; border: 1px solid #d4c9bc; border-radius: 10px;
+    padding: 0.75rem 1rem; font-family: Georgia, serif; font-size: 0.9rem;
+    background: white; color: #1a1410; outline: none;
+  }
+  #keyInput:focus { border-color: #c8956c; }
+  .primary-btn {
+    background: #8b4513; color: white; border: none; border-radius: 10px;
+    padding: 0.75rem 2rem; font-family: Georgia, serif; font-size: 0.95rem;
+    cursor: pointer; width: 100%; max-width: 400px;
+  }
+  #keyErr { color: #c0392b; font-size: 0.82rem; display: none; padding: 0 1rem; line-height: 1.5; }
+  #app { display: none; flex-direction: column; flex: 1; min-height: 100dvh; }
+  header {
+    padding: 0.9rem 1.2rem 0.6rem; border-bottom: 1px solid #d4c9bc;
+    background: #f7f3ee; position: sticky; top: 0; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header h1 { font-size: 1.15rem; font-weight: normal; font-style: italic; }
+  #resetKey {
+    font-size: 0.7rem; color: #7a6f65; background: none; border: none;
+    cursor: pointer; font-family: Georgia, serif; text-decoration: underline;
+  }
+  #topicBar {
+    padding: 0.45rem 1.2rem; background: #e8ddd0; border-bottom: 1px solid #d4c9bc;
+    font-size: 0.7rem; color: #7a6f65; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;
+  }
+  .ttag { background: #8b4513; color: white; border-radius: 20px; padding: 0.12rem 0.5rem; font-size: 0.67rem; }
+  #chat {
+    flex: 1; overflow-y: auto; padding: 1rem 1rem 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .msg { display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
+  .msg.ai  { align-items: flex-start; }
+  .msg.user { align-items: flex-end; }
+  .lbl { font-size: 0.63rem; color: #7a6f65; font-style: italic; margin-bottom: 0.2rem; padding: 0 0.2rem; }
+  .bubble { max-width: 90%; padding: 0.85rem 1rem; line-height: 1.75; font-size: 0.93rem; }
+  .msg.ai  .bubble { background: white; border: 1px solid #d4c9bc; border-radius: 3px 14px 14px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .msg.user .bubble { background: #8b4513; color: white; border-radius: 14px 3px 14px 14px; }
+  .acts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; max-width: 90%; }
+  .abtn {
+    background: #e8ddd0; border: 1px solid #d4c9bc; border-radius: 20px;
+    padding: 0.32rem 0.75rem; font-family: Georgia, serif; font-size: 0.76rem;
+    cursor: pointer; color: #1a1410;
+  }
+  .abtn.spk { color: #7a6f65; }
+  .abtn.spk.on { background: #8b4513; color: white; border-color: #8b4513; }
+  .typing-bub {
+    background: white; border: 1px solid #d4c9bc; border-radius: 3px 14px 14px 14px;
+    padding: 0.85rem 1rem; display: flex; gap: 5px; align-items: center;
+  }
+  .dot { width:7px; height:7px; border-radius:50%; background:#7a6f65; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2){ animation-delay:.2s; }
+  .dot:nth-child(3){ animation-delay:.4s; }
+  #inputArea {
+    border-top: 1px solid #d4c9bc; background: white;
+    padding: 0.75rem 1rem 1.1rem; display: flex; gap: 0.6rem;
+    position: sticky; bottom: 0;
+  }
+  textarea {
+    flex: 1; border: 1px solid #d4c9bc; border-radius: 10px;
+    padding: 0.6rem 0.85rem; font-family: Georgia, serif; font-size: 0.95rem;
+    resize: none; background: #f7f3ee; color: #1a1410; outline: none;
+    min-height: 44px; max-height: 110px; line-height: 1.5;
+  }
+  textarea:focus { border-color: #c8956c; }
+  #sendBtn {
+    background: #8b4513; color: white; border: none; border-radius: 10px;
+    width: 44px; height: 44px; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; align-self: flex-end;
+  }
+  #sendBtn:disabled { background: #d4c9bc; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+</style>
+</head>
+<body>
+
+<div id="keyScreen">
+  <h2>Bildungsbegleiter</h2>
+  <p>
+    Du brauchst einmalig einen <strong>Anthropic API-Key</strong>.<br>
+    Den bekommst du unter<br>
+    <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+    → „API Keys" → „Create Key"<br><br>
+    Der Key wird nur lokal in deinem Browser gespeichert.
+  </p>
+  <input id="keyInput" type="text" placeholder="sk-ant-api03-…" autocomplete="off"
+    style="font-size:0.8rem; letter-spacing:0.02em" />
+  <div id="keyErr"></div>
+  <button class="primary-btn" id="startBtn" onclick="saveKey()">Speichern &amp; starten</button>
+</div>
+
+<div id="app">
+  <header>
+    <h1>Bildungsbegleiter</h1>
+    <button id="resetKey" onclick="clearKey()">Key löschen</button>
+  </header>
+  <div id="topicBar">
+    <span>Erkundet:</span>
+    <span id="topicList" style="font-style:italic">noch nichts – fangen wir an!</span>
+  </div>
+  <div id="chat"></div>
+  <div id="inputArea">
+    <textarea id="inp" placeholder="Schreib deine Antwort …" rows="1"
+      oninput="autoResize(this)"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+    ></textarea>
+    <button id="sendBtn" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+const SYSTEM = `Du bist ein einfühlsamer, kluger Bildungsbegleiter für Sabrina. Deine Aufgabe: allgemeines Wissen schrittweise und angenehm weiterentwickeln.
+
+PRINZIPIEN:
+- Keine direkten Wissensfragen – kein Test-Feeling
+- Erzähle etwas Interessantes und lies die Reaktion
+- Erkenne aus Antworten, was sie schon weiß; vertiefe wo Interesse entsteht
+- Wechsle sanft zwischen: Geschichte, Philosophie, Naturwissenschaft, Kunst, Psychologie, Wirtschaft, Geografie, Literatur, Musik, Technik
+- Audiostil: lebendige gesprochene Sprache, kurze Sätze, keine Bullet Points
+- Ende jeder Antwort: sanfte Einladung weiterzumachen
+- Warm, begeistert, nie dozierend – Deutsch, max. 160 Wörter`;
+
+const TOPICS = ["Geschichte","Philosophie","Physik","Biologie","Psychologie","Kunst","Musik","Wirtschaft","Geografie","Literatur","Mathematik","Astronomie","Chemie","Politik","Soziologie"];
+const QUICK  = ["Mehr dazu!", "Anderes Thema", "Noch tiefer gehen", "Für heute reicht's 😊"];
+
+let history = [], explored = [], activeSpkBtn = null, busy = false, apiKey = "";
+
+function loadKey() { try { return localStorage.getItem("bb_key") || ""; } catch(e) { return ""; } }
+function storeKey(k) { try { localStorage.setItem("bb_key", k); } catch(e) {} }
+function clearKey() {
+  try { localStorage.removeItem("bb_key"); } catch(e) {}
+  apiKey = "";
+  history = []; explored = [];
+  document.getElementById("chat").innerHTML = "";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("keyScreen").style.display = "flex";
+}
+
+function showErr(msg) {
+  const e = document.getElementById("keyErr");
+  e.style.display = "block";
+  e.style.color = "#c0392b";
+  e.textContent = msg;
+}
+
+async function saveKey() {
+  const val = document.getElementById("keyInput").value.trim();
+  const btn = document.getElementById("startBtn");
+
+  if (!val) { showErr("❌ Bitte einen Key eingeben."); return; }
+  if (!val.startsWith("sk-")) { showErr("❌ Key muss mit 'sk-' beginnen. Bitte nochmal kopieren."); return; }
+
+  btn.textContent = "Verbinde …";
+  btn.disabled = true;
+  document.getElementById("keyErr").style.display = "none";
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": val,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 10,
+        messages: [{ role:"user", content:"Hi" }]
+      })
+    });
+
+    const d = await r.json();
+
+    if (r.ok) {
+      storeKey(val);
+      apiKey = val;
+      startApp();
+    } else {
+      // Show exact API error message
+      const msg = d?.error?.message || `Fehler ${r.status}`;
+      showErr("❌ " + msg);
+      btn.textContent = "Speichern & starten";
+      btn.disabled = false;
+    }
+  } catch(e) {
+    showErr("❌ Netzwerkfehler: " + e.message + " – Bitte Internetverbindung prüfen.");
+    btn.textContent = "Speichern & starten";
+    btn.disabled = false;
+  }
+}
+
+function startApp() {
+  document.getElementById("keyScreen").style.display = "none";
+  const app = document.getElementById("app");
+  app.style.display = "flex"; app.style.flexDirection = "column";
+  initChat();
+}
+
+async function claude(msgs) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 600, system: SYSTEM, messages: msgs })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || "API-Fehler " + r.status);
+  return d.content?.[0]?.text || "";
+}
+
+function speak(text, btn) {
+  window.speechSynthesis.cancel();
+  if (activeSpkBtn) {
+    activeSpkBtn.textContent = "▶ Anhören"; activeSpkBtn.classList.remove("on");
+    if (activeSpkBtn === btn) { activeSpkBtn = null; return; }
+  }
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "de-DE"; utter.rate = 1.05; utter.pitch = 1.0;
+  const go = () => {
+    const vs = window.speechSynthesis.getVoices();
+    const v = vs.find(v=>v.lang==="de-DE") || vs.find(v=>v.lang?.startsWith("de"));
+    if (v) utter.voice = v;
+    btn.textContent = "⏹ Stoppen"; btn.classList.add("on"); activeSpkBtn = btn;
+    utter.onend = utter.onerror = () => { btn.textContent = "▶ Nochmal"; btn.classList.remove("on"); activeSpkBtn = null; };
+    window.speechSynthesis.speak(utter);
+  };
+  if (window.speechSynthesis.getVoices().length > 0) go();
+  else { window.speechSynthesis.onvoiceschanged = () => { go(); window.speechSynthesis.onvoiceschanged = null; }; }
+}
+
+function addMsg(role, text, withQuick=false) {
+  const chat = document.getElementById("chat");
+  const wrap = document.createElement("div"); wrap.className = `msg ${role}`;
+  const lbl = document.createElement("div"); lbl.className = "lbl";
+  lbl.textContent = role === "ai" ? "Bildungsbegleiter" : "Du";
+  const bub = document.createElement("div"); bub.className = "bubble"; bub.textContent = text;
+  wrap.appendChild(lbl); wrap.appendChild(bub);
+  if (role === "ai") {
+    const acts = document.createElement("div"); acts.className = "acts";
+    const spk = document.createElement("button"); spk.className = "abtn spk";
+    spk.textContent = "▶ Anhören"; spk.onclick = () => speak(text, spk);
+    acts.appendChild(spk);
+    if (withQuick) QUICK.forEach(q => {
+      const b = document.createElement("button"); b.className = "abtn"; b.textContent = q;
+      b.onclick = () => { document.getElementById("inp").value = q; sendMsg(); };
+      acts.appendChild(b);
+    });
+    wrap.appendChild(acts);
+  }
+  chat.appendChild(wrap); chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById("chat");
+  const w = document.createElement("div"); w.className = "msg ai"; w.id = "typing";
+  const l = document.createElement("div"); l.className = "lbl"; l.textContent = "Bildungsbegleiter";
+  const b = document.createElement("div"); b.className = "typing-bub";
+  b.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  w.appendChild(l); w.appendChild(b); chat.appendChild(w); chat.scrollTop = chat.scrollHeight;
+}
+function removeTyping() { document.getElementById("typing")?.remove(); }
+
+function updateTopics(text) {
+  TOPICS.forEach(t => { if (text.includes(t) && !explored.includes(t)) explored.push(t); });
+  if (!explored.length) return;
+  document.getElementById("topicList").innerHTML = explored.map(t=>`<span class="ttag">${t}</span>`).join(" ");
+}
+
+function autoResize(el) { el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,110)+"px"; }
+
+async function sendMsg() {
+  const inp = document.getElementById("inp");
+  const text = inp.value.trim();
+  if (!text || busy) return;
+  inp.value = ""; autoResize(inp); busy = true; document.getElementById("sendBtn").disabled = true;
+  addMsg("user", text); history.push({ role:"user", content:text }); showTyping();
+  try {
+    const reply = await claude(history);
+    removeTyping(); history.push({ role:"assistant", content:reply });
+    addMsg("ai", reply, true); updateTopics(reply);
+  } catch(e) { removeTyping(); addMsg("ai", "Fehler: " + e.message); }
+  busy = false; document.getElementById("sendBtn").disabled = false;
+}
+
+async function initChat() {
+  document.getElementById("sendBtn").disabled = true;
+  const init = [{ role:"user", content:"Starte das erste Gespräch – begrüße mich herzlich und mach mir Lust auf ein erstes Thema mit einer kurzen Kostprobe." }];
+  showTyping();
+  try {
+    const reply = await claude(init);
+    removeTyping(); history = [...init, { role:"assistant", content:reply }];
+    addMsg("ai", reply, true); updateTopics(reply);
+  } catch(e) { removeTyping(); addMsg("ai", "Fehler beim Starten: " + e.message); }
+  document.getElementById("sendBtn").disabled = false;
+}
+
+apiKey = loadKey();
+if (apiKey) startApp();
+</script>
+</body>
+</html>
